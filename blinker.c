@@ -24,6 +24,29 @@ struct blinker_device_struct {
 	unsigned long sleep_time; //The amount of time to sleep between each blink
 };
 
+
+int blinker_open(struct inode *inode, struct file *filp)
+{
+	return 0;
+}
+
+ssize_t blinker_write(struct file *filp, const char __user *buf, size_t size,
+		loff_t *off)
+{
+	return 0;
+}
+
+long blinker_ioctl (struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	return 0;
+}
+
+struct file_operations fops = {
+	.owner = THIS_MODULE,
+	.open = blinker_open,
+	.write = blinker_write,
+};
+
 static __init int blinker_init(void)
 {
 	return 0;
