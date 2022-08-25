@@ -40,10 +40,36 @@ int blinker_open(struct inode *inode, struct file *filp)
 ssize_t blinker_write(struct file *filp, const char __user *buf, size_t size,
 		loff_t *off)
 {
-	return 0;
+	ssize_t ret = 0;
+	struct blinker_device_struct *dev = filp->private_data;
+	if (mutex_lock_interruptible(&dev->mutex))
+		return -ERESTARTSYS;
+	for (size_t i = 0; i < size; i++) {
+		char chr = 0;
+		if (get_user(chr, buf + i)) {
+			ret = -EFAULT;
+			goto ret;
+		}
+		switch (chr) {
+		case '0':
+			dev->led_status = false;
+			break;
+		case '1':
+			dev->led_status = true;
+			break;
+		case '\0':
+			ret = i;
+			goto ret;
+		default:
+			ret = -EINVAL;
+		}
+	}
+ret:
+	mutex_unlock(&dev->mutex);
+	return ret;
 }
 
-long blinker_ioctl (struct file *filp, unsigned int cmd, unsigned long arg)
+long blinker_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	return 0;
 }
