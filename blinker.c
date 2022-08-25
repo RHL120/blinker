@@ -2,6 +2,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/cdev.h>
+#include "blinker.h"
 
 MODULE_LICENSE("GPL");
 
@@ -71,7 +72,36 @@ ret:
 
 long blinker_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-	return 0;
+	long ret = 0;
+	struct blinker_device_struct *dev = filp->private_data;
+	if (mutex_lock_interruptible(&dev->mutex)) {
+		return -ERESTARTSYS;
+	}
+	switch (cmd) {
+	case BLINKER_GET_PIN:
+		if (put_user(dev->pin, (int *)arg)) {
+			ret = -EFAULT;
+		}
+		goto ret;
+	case BLINKER_SET_PIN:
+		if (get_user(dev->pin, (int *)arg))
+			ret = -EFAULT;
+		goto ret;
+	case BLINKER_GET_SLEEP:
+		if (put_user(dev->sleep_time, (unsigned long *)arg)) {
+			ret = -EFAULT;
+		}
+		goto ret;
+	case BLINKER_SET_SLEEP:
+		if (get_user(dev->sleep_time, (unsigned long *)arg))
+			ret = -EFAULT;
+		goto ret;
+	default:
+		ret = -ENOTTY;
+	}
+ret:
+	mutex_unlock(&dev->mutex);
+	return ret;
 }
 
 struct file_operations fops = {
