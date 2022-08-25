@@ -5,6 +5,16 @@
 
 MODULE_LICENSE("GPL");
 
+//The default value in blinker_device.sleep_time
+unsigned long default_sleep_time = 10;
+//The default major number, if it is zero alloc_chrdev_region will be used
+int major = 0;
+//The gpio pin to which the led is connected
+int gpio_pin = 7;
+module_param(default_sleep_time, ulong, S_IRUGO);
+module_param(major, int, S_IRUGO);
+module_param(gpio_pin, int, S_IRUGO);
+
 dev_t dev_num;
 
 //The device's struct
