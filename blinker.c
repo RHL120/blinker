@@ -19,14 +19,21 @@ dev_t dev_num;
 
 //The device's struct
 struct blinker_device_struct {
+	struct mutex mutex; //The mutex held when the file is being writen to
 	struct cdev cdev; //The cdev of the char device
 	bool led_status; //This should be true if the led is on, false if the led is off
 	unsigned long sleep_time; //The amount of time to sleep between each blink
+	int pin; //The pin to which the led is connected
 };
 
+struct blinker_device_struct blinker_device;
 
 int blinker_open(struct inode *inode, struct file *filp)
 {
+	//Get a pointer to the device_struct
+	filp->private_data = container_of(inode->i_cdev,
+			struct blinker_device_struct, cdev);
+	BUG_ON(!filp->private_data);
 	return 0;
 }
 
