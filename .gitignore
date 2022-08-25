@@ -1,0 +1,13 @@
+.Module.symvers.cmd
+.blinker.ko.cmd
+.blinker.mod.cmd
+.blinker.mod.o.cmd
+.blinker.o.cmd
+.modules.order.cmd
+Module.symvers
+blinker.ko
+blinker.mod
+blinker.mod.c
+blinker.mod.o
+blinker.o
+modules.order
