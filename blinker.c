@@ -6,6 +6,8 @@
 #include <linux/delay.h>
 #include "blinker.h"
 
+#define DRIVER_LABLE "blinker"
+
 MODULE_LICENSE("GPL");
 
 //The default value in blinker_device.sleep_time
@@ -123,7 +125,7 @@ long blinker_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				goto ret;
 			}
 			if (pin != dev->pin && !(ret = gpio_request(pin,
-							"blinker"))) {
+							DRIVER_LABLE))) {
 				if ((ret = gpio_direction_output(pin, 0))) {
 					gpio_free(pin);
 					goto ret;
@@ -167,7 +169,7 @@ static int blinker_device_init(struct blinker_device_struct *dev,
 	dev->led_status = led_status;
 	dev->pin = gpio_pin;
 	dev->sleep_time = sleep_time;
-	if ((ret = gpio_request(gpio_pin, "blinker")))
+	if ((ret = gpio_request(gpio_pin, DRIVER_LABLE)))
 		goto ret;
 	if ((ret = gpio_direction_output(gpio_pin, 0)))
 		goto gpio_free_ret;
@@ -185,9 +187,9 @@ static __init int blinker_init(void)
 	int ret = 0;
 	if (major) {
 		dev_num = MKDEV(major, 0);
-		ret = register_chrdev_region(dev_num, 1, "blinker");
+		ret = register_chrdev_region(dev_num, 1, DRIVER_LABLE);
 	} else {
-		ret = alloc_chrdev_region(&dev_num, 0, 1, "blinker");
+		ret = alloc_chrdev_region(&dev_num, 0, 1, DRIVER_LABLE);
 	}
 	if (ret)
 		goto ret;
