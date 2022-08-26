@@ -12,9 +12,12 @@ unsigned long default_sleep_time = 10;
 int major = 0;
 //The gpio pin to which the led is connected
 int gpio_pin = 7;
+//What status should the LED be in when the module is loaded
+bool default_led_status = false;
 module_param(default_sleep_time, ulong, S_IRUGO);
 module_param(major, int, S_IRUGO);
 module_param(gpio_pin, int, S_IRUGO);
+module_param(default_led_status, bool, S_IRUGO);
 
 dev_t dev_num;
 
@@ -36,6 +39,27 @@ int blinker_open(struct inode *inode, struct file *filp)
 			struct blinker_device_struct, cdev);
 	BUG_ON(!filp->private_data);
 	return 0;
+}
+
+ssize_t blinker_read(struct file *filp, char __user *buf, size_t size, loff_t *off)
+{
+	struct blinker_device_struct *dev = filp->private_data;
+	char res = 0;
+	//only output once.
+	//this helps with cat
+	if (*off > 0) {
+		return 0;
+	}
+	if (mutex_lock_interruptible(&dev->mutex)) {
+		return -ERESTARTSYS;
+	}
+	res = dev->led_status? '1' : '0';
+	mutex_unlock(&dev->mutex);
+	if (put_user(res, buf)) {
+		return -EFAULT;
+	}
+	(*off)++;
+	return 1;
 }
 
 ssize_t blinker_write(struct file *filp, const char __user *buf, size_t size,
@@ -63,7 +87,10 @@ ssize_t blinker_write(struct file *filp, const char __user *buf, size_t size,
 			goto ret;
 		default:
 			ret = -EINVAL;
+			goto ret;
 		}
+		(*off)++;
+		ret++;
 	}
 ret:
 	mutex_unlock(&dev->mutex);
@@ -107,17 +134,51 @@ ret:
 struct file_operations fops = {
 	.owner = THIS_MODULE,
 	.open = blinker_open,
+	.read = blinker_read,
 	.write = blinker_write,
+	.unlocked_ioctl = blinker_ioctl,
 };
+
+static int blinker_device_init(struct blinker_device_struct *dev,
+		bool led_status, int gpio_pin, unsigned long sleep_time,
+		dev_t dev_num)
+{
+	mutex_init(&dev->mutex);
+	dev->led_status = led_status;
+	dev->pin = gpio_pin;
+	dev->sleep_time = sleep_time;
+	cdev_init(&dev->cdev, &fops);
+	return cdev_add(&dev->cdev, dev_num, 1);
+}
 
 static __init int blinker_init(void)
 {
+	int ret = 0;
+	if (major) {
+		dev_num = MKDEV(major, 0);
+		ret = register_chrdev_region(dev_num, 1, "blinker");
+	} else {
+		ret = alloc_chrdev_region(&dev_num, 0, 1, "blinker");
+	}
+	if (ret)
+		goto ret;
+	ret = blinker_device_init(&blinker_device, default_led_status, gpio_pin,
+			default_sleep_time, dev_num);
+	if (ret)
+		goto chrdev_unregister_ret;
+	printk("The device has been registered, got major: %d, minor: %d\n",
+			MAJOR(dev_num), MINOR(dev_num));
+	goto ret;
+chrdev_unregister_ret:
+	unregister_chrdev_region(dev_num, 1);
+ret:
 	return 0;
 }
 
 static __exit void blinker_exit(void)
 {
-
+	cdev_del(&blinker_device.cdev);
+	unregister_chrdev_region(dev_num, 1);
 }
 
 module_init(blinker_init);
