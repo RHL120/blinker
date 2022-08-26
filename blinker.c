@@ -2,6 +2,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/cdev.h>
+#include <linux/gpio.h>
 #include "blinker.h"
 
 MODULE_LICENSE("GPL");
@@ -143,12 +144,22 @@ static int blinker_device_init(struct blinker_device_struct *dev,
 		bool led_status, int gpio_pin, unsigned long sleep_time,
 		dev_t dev_num)
 {
+	int ret = 0;
 	mutex_init(&dev->mutex);
 	dev->led_status = led_status;
 	dev->pin = gpio_pin;
 	dev->sleep_time = sleep_time;
+	if ((ret = gpio_request(gpio_pin, "blinker")))
+		goto ret;
+	if ((ret = gpio_direction_output(gpio_pin, 0)))
+		goto gpio_free_ret;
+	gpio_set_value(gpio_pin, led_status);
 	cdev_init(&dev->cdev, &fops);
-	return cdev_add(&dev->cdev, dev_num, 1);
+	if(!(ret = cdev_add(&dev->cdev, dev_num, 1)))
+		goto ret;
+gpio_free_ret: gpio_free(gpio_pin);
+ret: return ret;
+
 }
 
 static __init int blinker_init(void)
@@ -179,6 +190,7 @@ static __exit void blinker_exit(void)
 {
 	cdev_del(&blinker_device.cdev);
 	unregister_chrdev_region(dev_num, 1);
+	gpio_free(gpio_pin);
 }
 
 module_init(blinker_init);
