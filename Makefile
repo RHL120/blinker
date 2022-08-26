@@ -1,5 +1,5 @@
 LDDINC=$(PWD)/../include
-EXTRA_CFLAGS += -I$(LDDINC)
+EXTRA_CFLAGS += -std=gnu99 -I$(LDDINC)
 
 ifeq ($(KERNELRELEASE),)
 
