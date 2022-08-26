@@ -116,9 +116,23 @@ long blinker_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 		goto ret;
 	case BLINKER_SET_PIN:
-		if (get_user(dev->pin, (int *)arg))
-			ret = -EFAULT;
-		goto ret;
+		{
+			int pin = 0;
+			if (get_user(pin, (int *)arg)) {
+				ret = -EFAULT;
+				goto ret;
+			}
+			if (pin != dev->pin && !(ret = gpio_request(pin,
+							"blinker"))) {
+				if ((ret = gpio_direction_output(pin, 0))) {
+					gpio_free(pin);
+					goto ret;
+				}
+				gpio_set_value(pin, dev->led_status);
+				dev->pin = pin;
+			}
+			goto ret;
+		}
 	case BLINKER_GET_SLEEP:
 		if (put_user(dev->sleep_time, (unsigned long *)arg)) {
 			ret = -EFAULT;
