@@ -86,9 +86,6 @@ ssize_t blinker_write(struct file *filp, const char __user *buf, size_t size,
 		case '1':
 			dev->led_status = true;
 			break;
-		case '\0':
-			ret = i;
-			goto ret;
 		default:
 			ret = -EINVAL;
 			goto ret;
