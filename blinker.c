@@ -3,12 +3,13 @@
 #include <linux/init.h>
 #include <linux/cdev.h>
 #include <linux/gpio.h>
+#include <linux/delay.h>
 #include "blinker.h"
 
 MODULE_LICENSE("GPL");
 
 //The default value in blinker_device.sleep_time
-unsigned long default_sleep_time = 10;
+unsigned long default_sleep_time = 1000;
 //The default major number, if it is zero alloc_chrdev_region will be used
 int major = 0;
 //The gpio pin to which the led is connected
@@ -90,6 +91,9 @@ ssize_t blinker_write(struct file *filp, const char __user *buf, size_t size,
 			ret = -EINVAL;
 			goto ret;
 		}
+		gpio_set_value(dev->pin, dev->led_status);
+		if (i < size - 1)
+			mdelay(dev->sleep_time);
 		(*off)++;
 		ret++;
 	}
