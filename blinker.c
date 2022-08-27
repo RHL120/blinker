@@ -197,10 +197,8 @@ static __init int blinker_init(void)
 	printk("The device has been registered, got major: %d, minor: %d\n",
 			MAJOR(dev_num), MINOR(dev_num));
 	goto ret;
-chrdev_unregister_ret:
-	unregister_chrdev_region(dev_num, 1);
-ret:
-	return ret;
+chrdev_unregister_ret: unregister_chrdev_region(dev_num, 1);
+ret: return ret;
 }
 
 static __exit void blinker_exit(void)
