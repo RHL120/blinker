@@ -200,7 +200,7 @@ static __init int blinker_init(void)
 chrdev_unregister_ret:
 	unregister_chrdev_region(dev_num, 1);
 ret:
-	return 0;
+	return ret;
 }
 
 static __exit void blinker_exit(void)
