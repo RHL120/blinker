@@ -183,7 +183,7 @@ static int blinker_device_init(struct blinker_device_struct *dev,
 	cdev_init(&dev->cdev, &fops);
 	if(!(ret = cdev_add(&dev->cdev, dev_num, 1)))
 		goto ret;
-gpio_free_ret: 
+gpio_free_ret:
 #ifndef NO_GPIO
 	gpio_free(gpio_pin);
 #endif
