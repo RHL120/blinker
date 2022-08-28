@@ -7,6 +7,7 @@ ifeq ($(KERNELRELEASE),)
     KERNELDIR ?= /lib/modules/$(shell uname -r)/build
     PWD := $(shell pwd)
 
+all: modules blctl
 modules:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
 
@@ -15,6 +16,8 @@ modules_install:
 
 clean:
 	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions *.mod modules.order *.symvers
+blctl:
+	gcc blctl.c -o blctl
 
 .PHONY: modules modules_install clean
 
