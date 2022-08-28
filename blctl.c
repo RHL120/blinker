@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Failed to run ioctl\n");
 				ret = 1;
 			} else {
-				printf("The current sleep time is: %ld ms\n",
+				printf("The current sleep time is: %lu ms\n",
 						result);
 			}
 			goto fd_close_ret;
