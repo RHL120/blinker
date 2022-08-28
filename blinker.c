@@ -90,7 +90,9 @@ ssize_t blinker_write(struct file *filp, const char __user *buf, size_t size,
 			ret = -EINVAL;
 			goto ret;
 		}
+#ifndef NO_GPIO
 		gpio_set_value(dev->pin, dev->led_status);
+#endif
 		if (i < size - 1)
 			mdelay(dev->sleep_time);
 		(*off)++;
@@ -121,6 +123,11 @@ long blinker_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				ret = -EFAULT;
 				goto ret;
 			}
+#ifdef NO_GPIO
+			dev->pin = pin;
+			ret = 0;
+			goto ret;
+#endif
 			if (pin != dev->pin && !(ret = gpio_request(pin,
 							DRIVER_LABLE))) {
 				if ((ret = gpio_direction_output(pin, 0))) {
@@ -166,11 +173,13 @@ static int blinker_device_init(struct blinker_device_struct *dev,
 	dev->led_status = led_status;
 	dev->pin = gpio_pin;
 	dev->sleep_time = sleep_time;
+#ifndef NO_GPIO
 	if ((ret = gpio_request(gpio_pin, DRIVER_LABLE)))
 		goto ret;
 	if ((ret = gpio_direction_output(gpio_pin, 0)))
 		goto gpio_free_ret;
 	gpio_set_value(gpio_pin, led_status);
+#endif
 	cdev_init(&dev->cdev, &fops);
 	if(!(ret = cdev_add(&dev->cdev, dev_num, 1)))
 		goto ret;
@@ -205,7 +214,9 @@ static __exit void blinker_exit(void)
 {
 	cdev_del(&blinker_device.cdev);
 	unregister_chrdev_region(dev_num, 1);
+#ifndef NO_GPIO
 	gpio_free(gpio_pin);
+#endif
 }
 
 module_init(blinker_init);
