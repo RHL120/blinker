@@ -1,6 +1,6 @@
 LDDINC=$(PWD)/../include
 #uncomment bellow to disable gpio calls
-EXTRA_CFLAGS += -std=gnu99 -I$(LDDINC) #-DNO_GPIO
+EXTRA_CFLAGS += -std=gnu99 -I$(LDDINC) -DNO_GPIO
 
 ifeq ($(KERNELRELEASE),)
 
