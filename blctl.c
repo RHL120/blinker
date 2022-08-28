@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <limits.h>
 #include "blinker.h"
 
 //Print the usage string, if error is not NULL, the string is preceded by:
@@ -44,12 +47,31 @@ int main(int argc, char *argv[])
 			ret = 1;
 			goto fd_close_ret;
 		}
-		if (!strcmp(argv[1], "pin")) {
+		errno = 0;
+		char *endptr = NULL;
+		if (!strcmp(argv[2], "pin")) {
+			long arg = strtol(argv[3], &endptr, 0);
+			if (argv[3] == endptr || arg > INT_MAX || errno) {
+				print_usage(argv[0], "The value is not a valid int\n");
+			} else if (ioctl(fd, BLINKER_SET_PIN, (int *) &arg)) {
+				fprintf(stderr, "Failed to run ioctl\n");
+				ret = 1;
+			}
 			goto fd_close_ret;
 		}
-		if (!strcmp(argv[1], "sleep")) {
+		if (!strcmp(argv[2], "sleep")) {
+			unsigned long arg = strtoul(argv[3], &endptr, 0);
+			if (argv[3] == endptr || errno) {
+				print_usage(argv[3], "The value is not a valid \
+						unsigned long\n");
+			} else if (ioctl(fd, BLINKER_SET_SLEEP, &arg)) {
+				fprintf(stderr, "Failed to run ioctl\n");
+			}
 			goto fd_close_ret;
 		}
+		print_usage(argv[0], "Invalid variable");
+		ret = 1;
+		goto fd_close_ret;
 	}
 	if (!strcmp(argv[1], "get")) {
 		if (!strcmp(argv[2], "pin")) {
@@ -74,12 +96,12 @@ int main(int argc, char *argv[])
 			}
 			goto fd_close_ret;
 		}
-		usage_error(argv[0], "Unknown variable");
+		print_usage(argv[0], "Unknown variable");
 		ret = 1;
 		goto fd_close_ret;
 	}
 	ret = 1;
-	usage_error(argv[1], "Invalid variable")
+	print_usage(argv[1], "Invalid variable");
 fd_close_ret: close(fd);
 ret: return ret;
 }
