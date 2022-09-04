@@ -42,36 +42,40 @@ int main(int argc, char *argv[])
 		goto ret;
 	}
 	if (!strcmp(argv[1], "set")) {
-		if (argc < 4) {
-			print_usage(argv[1], "the set operation requires a value");
-			ret = 1;
-			goto fd_close_ret;
-		}
+		char *endptr = argv[3];
 		errno = 0;
-		char *endptr = NULL;
+		long long arg = strtoll(argv[3], &endptr, 0);
+		if (endptr != argv[3] + strlen(argv[3]) || errno) {
+			print_usage(argv[0], "Invalid value");
+			ret = 1;
+			goto ret;
+		}
 		if (!strcmp(argv[2], "pin")) {
-			long arg = strtol(argv[3], &endptr, 0);
-			if (argv[3] == endptr || arg > INT_MAX || errno) {
-				print_usage(argv[0], "The value is not a valid int\n");
-			} else if (ioctl(fd, BLINKER_SET_PIN, (int *) &arg)) {
-				fprintf(stderr, "Failed to run ioctl\n");
+			if (arg < INT_MIN || arg > INT_MAX) {
+				print_usage(argv[0], "the value should be an int");
+				ret = 1;
+				goto ret;
+			}
+			if (ioctl(fd, BLINKER_SET_PIN, (int *)&arg)) {
+				fputs("failed to run ioctl\n", stderr);
 				ret = 1;
 			}
-			goto fd_close_ret;
+			goto ret;
 		}
 		if (!strcmp(argv[2], "sleep")) {
-			unsigned long arg = strtoul(argv[3], &endptr, 0);
-			if (argv[3] == endptr || errno) {
-				print_usage(argv[3], "The value is not a valid \
-						unsigned long\n");
-			} else if (ioctl(fd, BLINKER_SET_SLEEP, &arg)) {
-				fprintf(stderr, "Failed to run ioctl\n");
+			if (arg < 0 || arg > ULONG_MAX) {
+				print_usage(argv[0],
+						"the value should be an unsigned long");
+				ret = 1;
+				goto ret;
 			}
-			goto fd_close_ret;
+			if (ioctl(fd, BLINKER_SET_SLEEP, (unsigned long *)&arg)) {
+				fputs("failed to run ioctl\n", stderr);
+				ret = 1;
+			}
+			goto ret;
 		}
-		print_usage(argv[0], "Invalid variable");
-		ret = 1;
-		goto fd_close_ret;
+
 	}
 	if (!strcmp(argv[1], "get")) {
 		if (!strcmp(argv[2], "pin")) {
