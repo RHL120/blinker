@@ -16,7 +16,7 @@ modules_install:
 
 clean:
 	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions *.mod modules.order *.symvers ; rm blctl
-blctl:
+blctl: blctl.c
 	gcc blctl.c -o blctl
 
 .PHONY: modules modules_install clean
