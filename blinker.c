@@ -54,9 +54,8 @@ ssize_t blinker_read(struct file *filp, char __user *buf, size_t size, loff_t *o
 	if (*off > 0) {
 		return 0;
 	}
-	if (mutex_lock_interruptible(&dev->mutex)) {
+	if (mutex_lock_interruptible(&dev->mutex))
 		return -ERESTARTSYS;
-	}
 	res = dev->led_status? '1' : '0';
 	mutex_unlock(&dev->mutex);
 	if (put_user(res, buf)) {
@@ -107,14 +106,12 @@ long blinker_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	long ret = 0;
 	struct blinker_device_struct *dev = filp->private_data;
-	if (mutex_lock_interruptible(&dev->mutex)) {
+	if (mutex_lock_interruptible(&dev->mutex))
 		return -ERESTARTSYS;
-	}
 	switch (cmd) {
 	case BLINKER_GET_PIN:
-		if (put_user(dev->pin, (int *)arg)) {
+		if (put_user(dev->pin, (int *)arg))
 			ret = -EFAULT;
-		}
 		goto ret;
 	case BLINKER_SET_PIN:
 		{
@@ -140,9 +137,8 @@ long blinker_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			goto ret;
 		}
 	case BLINKER_GET_SLEEP:
-		if (put_user(dev->sleep_time, (unsigned long *)arg)) {
+		if (put_user(dev->sleep_time, (unsigned long *)arg))
 			ret = -EFAULT;
-		}
 		goto ret;
 	case BLINKER_SET_SLEEP:
 		if (get_user(dev->sleep_time, (unsigned long *)arg))
